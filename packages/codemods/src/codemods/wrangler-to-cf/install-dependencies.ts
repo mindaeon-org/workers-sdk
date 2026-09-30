@@ -283,7 +283,7 @@ function needsVitePluginUpgrade(
 	if (
 		!VITE_PLUGIN_RANGE_PATTERN.test(declaredVersion) &&
 		!(
-			/^(?:workspace:|file:|link:|portal:)/.test(declaredVersion) &&
+			/^(?:workspace:|file:|link:|portal:|catalog:)/.test(declaredVersion) &&
 			compatibleInstalledVersion
 		)
 	) {
