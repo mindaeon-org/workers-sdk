@@ -1048,6 +1048,48 @@ describe("migrateWranglerToCf", () => {
 		]);
 	});
 
+	it("generates types unless Wrangler explicitly disables them", async ({
+		expect,
+	}) => {
+		const baseConfig = {
+			compatibility_date: "2026-09-23",
+			name: "example-worker",
+		};
+		const wranglerPackage = JSON.stringify({
+			name: "wrangler",
+			version: "4.136.0",
+		});
+		const defaultCwd = await createProject({
+			"node_modules/wrangler/package.json": wranglerPackage,
+			"wrangler.json": JSON.stringify(baseConfig),
+		});
+		const disabledCwd = await createProject({
+			"node_modules/wrangler/package.json": wranglerPackage,
+			"wrangler.json": JSON.stringify({
+				...baseConfig,
+				dev: { generate_types: false },
+			}),
+		});
+
+		for (const cwd of [defaultCwd, disabledCwd]) {
+			await migrateWranglerToCf(path.join(cwd, "wrangler.json"), {
+				bundler: "wrangler",
+			});
+		}
+
+		const defaultConfig = await readFile(
+			path.join(defaultCwd, "wrangler.config.ts"),
+			"utf8"
+		);
+		const disabledConfig = await readFile(
+			path.join(disabledCwd, "wrangler.config.ts"),
+			"utf8"
+		);
+		expect(defaultConfig).toContain("generate: true");
+		expect(defaultConfig).not.toContain("generate: false");
+		expect(disabledConfig).toContain("generate: false");
+	});
+
 	it("leaves Wrangler unchanged when Vite output does not need it", async ({
 		expect,
 	}) => {
