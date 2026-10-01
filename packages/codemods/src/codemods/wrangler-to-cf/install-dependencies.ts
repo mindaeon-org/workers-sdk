@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { runCommand } from "@cloudflare/cli-shared-helpers/command";
 import { installPackages } from "@cloudflare/cli-shared-helpers/packages";
 import {
 	BunPackageManager,
@@ -722,10 +723,17 @@ export async function installProjectDependencies(
 					) &&
 					(await pinVitePluginToBeta(packageDirectory, dev))
 				) {
-					await installPackages(packageManager.type, [], {
-						cwd: packageDirectory,
-						isWorkspaceRoot,
-					});
+					if (packageManager.type === "bun") {
+						await runCommand(["bun", "install"], {
+							cwd: packageDirectory,
+							silent: true,
+						});
+					} else {
+						await installPackages(packageManager.type, [], {
+							cwd: packageDirectory,
+							isWorkspaceRoot,
+						});
+					}
 				}
 			} catch (error) {
 				throw new DependencyInstallError(
